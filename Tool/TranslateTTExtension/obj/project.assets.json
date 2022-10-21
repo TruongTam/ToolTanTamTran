@@ -53,11 +53,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\Hangfire\\TranslateTTExtension\\TranslateTTExtension\\TranslateTTExtension.csproj",
+      "projectUniqueName": "E:\\Hangfire\\ToolTanTamTran\\Tool\\TranslateTTExtension\\TranslateTTExtension.csproj",
       "projectName": "TranslateTTExtension",
-      "projectPath": "E:\\Hangfire\\TranslateTTExtension\\TranslateTTExtension\\TranslateTTExtension.csproj",
+      "projectPath": "E:\\Hangfire\\ToolTanTamTran\\Tool\\TranslateTTExtension\\TranslateTTExtension.csproj",
       "packagesPath": "C:\\Users\\PC\\.nuget\\packages\\",
-      "outputPath": "E:\\Hangfire\\TranslateTTExtension\\TranslateTTExtension\\obj\\",
+      "outputPath": "E:\\Hangfire\\ToolTanTamTran\\Tool\\TranslateTTExtension\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\PC\\AppData\\Roaming\\NuGet\\NuGet.Config",

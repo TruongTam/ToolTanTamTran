@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections;
 using System.Resources;
+using System.Transactions;
 
 namespace TranslateTTExtension
 {
@@ -18,7 +19,11 @@ namespace TranslateTTExtension
 
         private async void button1_Click(object sender, EventArgs e)
         {
+            var linkRestEn = "E:/TanTam/wmsproject/trunk/WebApp/WMS2014/TGDD.WMS.Utils/Resource.en-US.resx";
+            var linkRestVN = "E:/TanTam/wmsproject/trunk/WebApp/WMS2014/TGDD.WMS.Utils/Resource.resx";
             List<string> resultTex = textBox1.Text.Split(',').ToList();
+            var tienTo = textBox2.Text.ToString();
+            var xsss= textBox1.Text.ToString();
             var texts = new List<string>();//texts
             texts.AddRange(resultTex);
             var resultDic = new Dictionary<string, string>();
@@ -27,106 +32,95 @@ namespace TranslateTTExtension
             {
                 return string.Format("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q={0}", _);
             }).ToList();
-            for (var i = 0; i < urltexts.Count(); i++)
+
+            string url = String.Format
+            ("https://translate.googleapis.com/translate_a/single?client=gtx&sl={0}&tl={1}&dt=t&q={2}",
+             "vi", "en", Uri.EscapeUriString(xsss));
+            HttpClient httpClient = new HttpClient();
+            string result = httpClient.GetStringAsync(url).Result;
+            var jsonData = JsonConvert.DeserializeObject<List<dynamic>>(result);
+            var translationItems = jsonData[0];
+            string translation = "";
+            var dtranslation = "";
+            foreach (object item in translationItems)
             {
-                using var httpRequest = new HttpRequestMessage(HttpMethod.Get, urltexts[i]);
+                IEnumerable translationLineObject = item as IEnumerable;
+                IEnumerator translationLineString = translationLineObject.GetEnumerator();
+                translationLineString.MoveNext();
+                translation += string.Format(" {0}", Convert.ToString(translationLineString.Current));
+                translationLineString.MoveNext();
+                dtranslation += string.Format(" {0}", Convert.ToString(translationLineString.Current));
+            }
+            if (translation.Length > 1)
+            {
+                translation = translation.Substring(1);
+            }
 
-                //httpRequest.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-
-                using (var httpClient = new HttpClient())
+            List<string> resultTrsEng = translation.Split(',').ToList();
+            List<string> resultTrsVN = dtranslation.Split(',').ToList();
+            for(var i = 0; i < resultTrsEng.Count(); i++)
+            {
+                outPuttextDic.TextEN.Add(tienTo + "_" + resultTrsEng[i], resultTrsEng[i]);
+                outPuttextDic.TextVI.Add(tienTo + "_" + resultTrsEng[i], resultTrsVN[i]);
+            }
+            using var readllE = new ResXResourceReader(linkRestEn);
+            using var readllV = new ResXResourceReader(linkRestVN);
+            var x = readllE.GetEnumerator();//GetEnumerator tiếng anh đã có sẵn
+            var xv = readllV.GetEnumerator();//GetEnumerator tiếng việt đã có sẵn
+            var xc = new outputText();
+            while (x.MoveNext())
+            {
+                try
                 {
-                    var result = await httpClient.SendAsync(httpRequest);
-                    string results = result.Content.ReadAsStringAsync().Result;
-                    var jsonData = JsonConvert.DeserializeObject<List<dynamic>>(results);
-                    var translationItems = jsonData[0];
-                    string translation = "";
-                    foreach (object item in translationItems)
-                    {
-                        IEnumerable translationLineObject = item as IEnumerable;
-                        IEnumerator translationLineString = translationLineObject.GetEnumerator();
-                        translationLineString.MoveNext();
-                        translation += string.Format("{0}", Convert.ToString(translationLineString.Current));
-                    }
-                    var textToE = string.Format("{0}_{1}: {2}", resultTex[i], translation.Replace(" ", ""), translation);
-                    var textToV = string.Format("{0}_{1}: {2}", resultTex[i], translation.Replace(" ", ""), texts[i]);
-                    try
-                    {
-                        outPuttextDic.TextEN.Add(string.Format("{0}_{1}", textBox2.Text, translation.Replace(" ", "")), translation);
-
-                        outPuttextDic.TextVI.Add(string.Format("{0}_{1}", textBox2.Text, translation.Replace(" ", "")), resultTex[i]);
-
-
-                        resultDic.Add(textToV, textToE);
-                    }
-                    catch (Exception ex)
-                    {
-                        i++;
-                    }
-                    if (result.IsSuccessStatusCode)
-                    {
-                        Console.Write(result.StatusCode);
-                    }
-                    else
-                    {
-                        Console.Write(result.StatusCode);
-                    }
+                    outPuttextDic.TextEN.Add((string)x.Key, (string)x.Value);
                 }
-                using var readllE = new ResXResourceReader("E:/TanTam/wmsproject/trunk/WebApp/WMS2014/TGDD.WMS.Utils/Resource.en-US.resx");
-                using var readllV = new ResXResourceReader("E:/TanTam/wmsproject/trunk/WebApp/WMS2014/TGDD.WMS.Utils/Resource.resx");
-                var x = readllE.GetEnumerator();
-                var xc = new outputText();
-                while (x.MoveNext())
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        outPuttextDic.TextEN.Add((string)x.Key, (string)x.Value);
-                        
-                        resultDic.Add((string)x.Key, (string)x.Value);
-                    }
-                    catch (Exception ex)
-                    {
-                        x.MoveNext();
-                    }
+                    x.MoveNext();
                 }
-                var xv = readllV.GetEnumerator();
-                var xcv = new outputText();
-                while (xv.MoveNext())
+            }
+           
+            var xcv = new outputText();
+            while (xv.MoveNext())
+            {
+                try
                 {
-                    try
-                    {
-                        outPuttextDic.TextVI.Add((string)xv.Key, (string)xv.Value);
-                    }
-                    catch (Exception ex)
-                    {
-                        xv.MoveNext();
-                    }
+                    outPuttextDic.TextVI.Add((string)xv.Key, (string)xv.Value);
                 }
-                //Chính Sách, Đổi Trả, Thu, Mua
-                using (ResXResourceWriter resx = new ResXResourceWriter("E:/TanTam/wmsproject/trunk/WebApp/WMS2014/TGDD.WMS.Utils/Resource.en-US.resx"))
+                catch (Exception ex)
                 {
-                    outPuttextDic.TextEN.Select(x =>
-                    {
-                        resx.AddResource(x.Key, x.Value);
-                        return xc;
-                    }).ToList();
-
+                    xv.MoveNext();
                 }
-                using (ResXResourceWriter resxV = new ResXResourceWriter("E:/TanTam/wmsproject/trunk/WebApp/WMS2014/TGDD.WMS.Utils/Resource.resx"))
+            }
+            //Chính Sách, Đổi Trả, Thu, Mua
+            using (ResXResourceWriter resx = new ResXResourceWriter(linkRestEn))
+            {
+                outPuttextDic.TextEN.Select(x =>
                 {
-                    outPuttextDic.TextVI.Select(x =>
-                    {
-                        resxV.AddResource(x.Key, x.Value);
-                        return xc;
-                    }).ToList();
+                    resx.AddResource(x.Key, x.Value);
+                    return xc;
+                }).ToList();
 
-                }
-            };
+            }
+            using (ResXResourceWriter resxV = new ResXResourceWriter(linkRestVN))
+            {
+                outPuttextDic.TextVI.Select(x =>
+                {
+                    resxV.AddResource(x.Key, x.Value);
+                    return xc;
+                }).ToList();
 
+            }
+        }
 
+    
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
 
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        private void textBox2_TextChanged(object sender, EventArgs e)
         {
 
         }
